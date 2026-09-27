@@ -72,6 +72,12 @@ export class GameEngine {
     this.levelClearTimer = 0;
     this.mazeFlash = false;
 
+    // Speed and visual shake effects
+    this.gameSpeedMult = 1.0;
+    this.shakeMagnitude = 0;
+    this.energizedTimeLeft = 0;
+    this.energizedTotalTime = 8.0;
+
     // Callbacks for UI updates
     this.onScoreUpdate = null;
     this.onLivesUpdate = null;
@@ -79,11 +85,18 @@ export class GameEngine {
     this.onFruitUpdate = null;
     this.onGameOver = null;
     this.onStateChange = null;
+    this.onEnergizerUpdate = null;
+    this.onProgressUpdate = null;
+    this.onAchievementUnlock = null;
 
     this.lastTime = 0;
     this.animId = null;
 
     this.powerPelletPulse = 0;
+  }
+
+  setSpeed(mult) {
+    this.gameSpeedMult = Math.max(0.5, Math.min(2.5, mult));
   }
 
   init(mapId = 'original', difficulty = 'arcade') {
@@ -219,6 +232,14 @@ export class GameEngine {
   update(dt) {
     this.powerPelletPulse = (this.powerPelletPulse + dt * 5) % (Math.PI * 2);
 
+    // Energizer countdown tracking
+    if (this.energizedTimeLeft > 0) {
+      this.energizedTimeLeft = Math.max(0, this.energizedTimeLeft - dt);
+      if (this.onEnergizerUpdate) {
+        this.onEnergizerUpdate(this.energizedTimeLeft, this.energizedTotalTime);
+      }
+    }
+
     if (this.state === GAME_STATES.DYING) {
       this.pacman.update(dt, this.mapData.mazeGrid, this.boardWidth, this.boardHeight);
       this.particles.update(dt);
@@ -311,6 +332,9 @@ export class GameEngine {
           this.particles.addPelletSparkles(dot.x, dot.y, '#ffe600', 2);
           this.checkHighScore();
           this.notifyUI();
+          if (this.onProgressUpdate) {
+            this.onProgressUpdate(this.dotsEatenThisLevel, this.mapData.totalDots);
+          }
           break;
         }
       }
@@ -333,9 +357,18 @@ export class GameEngine {
           if (this.difficulty === 'casual') scaredSecs += 2.5;
           if (this.difficulty === 'nightmare') scaredSecs *= 0.65;
 
+          this.energizedTimeLeft = scaredSecs;
+          this.energizedTotalTime = scaredSecs;
+          if (this.onEnergizerUpdate) {
+            this.onEnergizerUpdate(this.energizedTimeLeft, this.energizedTotalTime);
+          }
+
           this.ghosts.forEach(g => g.setFrightened(scaredSecs));
           this.checkHighScore();
           this.notifyUI();
+          if (this.onProgressUpdate) {
+            this.onProgressUpdate(this.dotsEatenThisLevel, this.mapData.totalDots);
+          }
           break;
         }
       }
@@ -387,11 +420,12 @@ export class GameEngine {
 
       if (dist < threshold) {
         if (g.mode === GHOST_MODES.FRIGHTENED) {
-          // Eat Ghost without freezing the game!
+          // Eat Ghost with tactile screen shake!
           g.mode = GHOST_MODES.EATEN;
           this.ghostCombo++;
           const pts = Math.min(1600, 200 * Math.pow(2, this.ghostCombo - 1));
           this.score += pts;
+          this.shakeMagnitude = 3.5;
 
           sound.playEatGhost();
           this.particles.addGhostExplosion(g.x, g.y, g.color, 25);
@@ -412,6 +446,7 @@ export class GameEngine {
   handlePacmanHit() {
     sound.stopSiren();
     sound.playDeath();
+    this.shakeMagnitude = 8.0;
     this.state = GAME_STATES.DYING;
     this.pacman.startDeath();
     this.particles.addDeathBurst(this.pacman.x, this.pacman.y);
@@ -466,6 +501,14 @@ export class GameEngine {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.boardWidth, this.boardHeight);
 
+    ctx.save();
+    if (this.shakeMagnitude > 0.1) {
+      const sx = (Math.random() - 0.5) * this.shakeMagnitude;
+      const sy = (Math.random() - 0.5) * this.shakeMagnitude;
+      ctx.translate(sx, sy);
+      this.shakeMagnitude *= 0.86;
+    }
+
     // 1. Draw Maze Walls
     this.drawMazeWalls(ctx);
 
@@ -487,6 +530,8 @@ export class GameEngine {
 
     // 6. Draw Particle System & Score Popups
     this.particles.draw(ctx);
+
+    ctx.restore();
   }
 
   cacheMazeWalls() {
@@ -584,7 +629,7 @@ export class GameEngine {
 
   loop(currentTime) {
     if (!this.lastTime) this.lastTime = currentTime;
-    const dt = Math.min(0.1, (currentTime - this.lastTime) / 1000);
+    const dt = Math.min(0.08, (currentTime - this.lastTime) / 1000) * this.gameSpeedMult;
     this.lastTime = currentTime;
 
     this.update(dt);

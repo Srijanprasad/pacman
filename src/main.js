@@ -1,5 +1,5 @@
 // =========================================================
-// PAC-MAN DELUXE - MAIN UI CONTROLLER & ENTRY POINT
+// PAC-MAN DELUXE ARCADE 2.0 - MAIN UI & TELEMETRY CONTROLLER
 // =========================================================
 
 import { sound } from './audio.js';
@@ -14,6 +14,14 @@ const stageEl = document.getElementById('stage-number');
 const livesDisplay = document.getElementById('lives-display');
 const fruitCollectedEl = document.getElementById('fruit-collected');
 
+// Progress & Energizer Bar Elements
+const energizerGauge = document.getElementById('energizer-gauge');
+const energizerFill = document.getElementById('energizer-fill');
+const energizerTimerText = document.getElementById('energizer-timer-text');
+const stageDotFill = document.getElementById('stage-dot-fill');
+const dotCountLabel = document.getElementById('dot-count-label');
+
+// Overlays & Announcers
 const overlayScreen = document.getElementById('overlay-screen');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySubtitle = document.getElementById('overlay-subtitle');
@@ -22,11 +30,16 @@ const btnStart = document.getElementById('btn-start');
 const announcerToast = document.getElementById('announcer-toast');
 const gameStatusText = document.getElementById('game-status-text');
 
+// Header Action Buttons
 const btnTheme = document.getElementById('btn-theme');
 const btnCrt = document.getElementById('btn-crt');
 const btnSound = document.getElementById('btn-sound');
 const soundIcon = document.getElementById('sound-icon');
+const btnSpeed = document.getElementById('btn-speed');
+const speedLabel = document.getElementById('speed-label');
+const btnFullscreen = document.getElementById('btn-fullscreen');
 const btnLeaderboard = document.getElementById('btn-leaderboard');
+const btnAchievements = document.getElementById('btn-achievements');
 const btnHelp = document.getElementById('btn-help');
 const btnPause = document.getElementById('btn-pause');
 const btnRestart = document.getElementById('btn-restart');
@@ -34,8 +47,10 @@ const btnRestart = document.getElementById('btn-restart');
 // Modals
 const modalScores = document.getElementById('modal-scores');
 const modalInitials = document.getElementById('modal-initials');
+const modalAchievements = document.getElementById('modal-achievements');
 const modalHelp = document.getElementById('modal-help');
 const leaderboardRows = document.getElementById('leaderboard-rows');
+const badgeGrid = document.getElementById('badge-grid');
 const btnClearScores = document.getElementById('btn-clear-scores');
 const btnSaveInitials = document.getElementById('btn-save-initials');
 const playerInitialsInput = document.getElementById('player-initials');
@@ -44,41 +59,125 @@ const entryScoreVal = document.getElementById('entry-score-val');
 // Selection buttons
 const diffButtons = document.querySelectorAll('.diff-btn');
 const mapButtons = document.querySelectorAll('.map-btn');
-const dpadButtons = document.querySelectorAll('.dpad-btn');
+const dpadButtons = document.querySelectorAll('.dpad-key');
 
-// Initialize Game Engine
+// VU Meter bars
+const leftVuBars = document.querySelectorAll('#vu-left .vu-bar');
+const rightVuBars = document.querySelectorAll('#vu-right .vu-bar');
+
+// Instantiate Game Engine
 const game = new GameEngine(canvas);
 
 let currentDifficulty = 'arcade';
 let currentMap = 'original';
 let currentPendingScore = 0;
 let currentPendingLevel = 1;
+let displayScore = 0;
+let scoreAnimFrame = null;
+
+// Game speed toggle: 1.0x -> 1.3x -> 1.6x
+const speedModes = [
+  { label: '1.0x', mult: 1.0 },
+  { label: '1.3x', mult: 1.3 },
+  { label: '1.6x', mult: 1.6 }
+];
+let currentSpeedIndex = 0;
 
 // Format numbers with leading zeros (e.g., 00480)
 function padScore(num, size = 5) {
-  let s = num.toString();
+  let s = Math.floor(num).toString();
   while (s.length < size) s = '0' + s;
   return s;
+}
+
+// Smooth animated roll-up for the HUD score
+function animateScoreTo(target) {
+  if (scoreAnimFrame) cancelAnimationFrame(scoreAnimFrame);
+  const step = () => {
+    if (displayScore < target) {
+      const diff = target - displayScore;
+      displayScore += Math.max(1, Math.ceil(diff * 0.15));
+      scoreEl.textContent = padScore(displayScore);
+      scoreAnimFrame = requestAnimationFrame(step);
+    } else {
+      displayScore = target;
+      scoreEl.textContent = padScore(displayScore);
+    }
+  };
+  step();
+}
+
+// ---------------------------------------------------------
+// ACHIEVEMENTS SYSTEM
+// ---------------------------------------------------------
+const STORAGE_KEY_ACHIEVEMENTS = 'pacman_arcade_achievements_v1';
+
+const ACHIEVEMENTS_LIST = [
+  { id: 'first_dot', icon: '🟡', title: 'First Nibble', desc: 'Eat your first food pellet.' },
+  { id: 'energizer', icon: '⚡', title: 'Energized!', desc: 'Chomp an Energizer Power Pellet.' },
+  { id: 'ghost_hunter', icon: '👻', title: 'Ghost Buster', desc: 'Eat a vulnerable blue ghost.' },
+  { id: 'fruit_eater', icon: '🍒', title: 'Fruit Feast', desc: 'Collect any bonus fruit.' },
+  { id: 'stage_clear', icon: '🌀', title: 'Warp Master', desc: 'Clear Stage 1 and advance.' },
+  { id: 'high_roller', icon: '👑', title: 'Arcade Legend', desc: 'Score 5,000 points or more.' },
+  { id: 'combo_quad', icon: '🔥', title: 'Ghost Combo x4', desc: 'Eat all 4 ghosts on a single energizer.' },
+  { id: 'immortal', icon: '🛡️', title: 'Untouchable', desc: 'Complete a level without losing a single life.' }
+];
+
+function getUnlockedAchievements() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function unlockAchievement(id) {
+  const unlocked = getUnlockedAchievements();
+  if (!unlocked.includes(id)) {
+    unlocked.push(id);
+    localStorage.setItem(STORAGE_KEY_ACHIEVEMENTS, JSON.stringify(unlocked));
+    const ach = ACHIEVEMENTS_LIST.find(a => a.id === id);
+    if (ach) {
+      showToast(`🏆 UNLOCKED: ${ach.title}!`);
+    }
+    renderAchievements();
+  }
+}
+
+function renderAchievements() {
+  const unlocked = getUnlockedAchievements();
+  badgeGrid.innerHTML = '';
+  ACHIEVEMENTS_LIST.forEach(ach => {
+    const isUnlocked = unlocked.includes(ach.id);
+    const div = document.createElement('div');
+    div.className = `badge-card ${isUnlocked ? 'unlocked' : ''}`;
+    div.innerHTML = `
+      <div class="badge-card-icon">${ach.icon}</div>
+      <div class="badge-card-info">
+        <h5>${ach.title}</h5>
+        <p>${ach.desc}</p>
+      </div>
+    `;
+    badgeGrid.appendChild(div);
+  });
 }
 
 // ---------------------------------------------------------
 // HIGH SCORES LEADERBOARD STORAGE
 // ---------------------------------------------------------
-const STORAGE_KEY_SCORES = 'pacman_arcade_leaderboard_v1';
+const STORAGE_KEY_SCORES = 'pacman_arcade_leaderboard_v2';
 
 function getLeaderboard() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_SCORES);
     if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) {}
   return [
-    { name: 'PAC', score: 15400, level: 5 },
-    { name: 'NEO', score: 12100, level: 4 },
-    { name: 'VRC', score: 8500, level: 3 },
-    { name: 'RET', score: 6200, level: 2 },
-    { name: 'BOT', score: 3400, level: 1 }
+    { name: 'PAC', score: 18400, level: 6 },
+    { name: 'NEO', score: 14200, level: 5 },
+    { name: 'VRC', score: 9800, level: 3 },
+    { name: 'RET', score: 6500, level: 2 },
+    { name: 'BOT', score: 3200, level: 1 }
   ];
 }
 
@@ -105,15 +204,15 @@ function addScoreToLeaderboard(name, score, level) {
 function renderLeaderboard() {
   const board = getLeaderboard();
   leaderboardRows.innerHTML = '';
+  const medals = ['🥇', '🥈', '🥉', '4TH', '5TH'];
   board.forEach((item, index) => {
     const row = document.createElement('div');
     row.className = 'score-row';
-    const medals = ['🥇', '🥈', '🥉', '4TH', '5TH'];
     row.innerHTML = `
       <span>${medals[index] || index + 1}</span>
       <span>${item.name}</span>
       <span>LV${item.level}</span>
-      <span class="neon-yellow">${padScore(item.score)}</span>
+      <span class="neon-yellow text-right">${padScore(item.score)}</span>
     `;
     leaderboardRows.appendChild(row);
   });
@@ -123,67 +222,95 @@ function renderLeaderboard() {
 // HUD & STATE SYNCHRONIZATION
 // ---------------------------------------------------------
 game.onScoreUpdate = (score, highScore) => {
-  scoreEl.textContent = padScore(score);
+  animateScoreTo(score);
   highScoreEl.textContent = padScore(highScore);
+  unlockAchievement('first_dot');
+  if (score >= 5000) unlockAchievement('high_roller');
 };
 
 game.onLivesUpdate = (lives) => {
   livesDisplay.innerHTML = '';
   for (let i = 0; i < Math.max(0, lives); i++) {
     const icon = document.createElement('span');
-    icon.className = 'life-icon';
+    icon.className = 'life-silhouette';
     livesDisplay.appendChild(icon);
   }
 };
 
 game.onLevelUpdate = (lvl) => {
   stageEl.textContent = (lvl < 10 ? '0' : '') + lvl;
+  if (lvl > 1) {
+    unlockAchievement('stage_clear');
+  }
 };
 
 game.onFruitUpdate = (fruits) => {
   fruitCollectedEl.innerHTML = '';
   fruits.slice(-5).forEach(f => {
     const span = document.createElement('span');
-    span.className = 'fruit-item';
+    span.className = 'fruit-icon';
     span.textContent = f;
     fruitCollectedEl.appendChild(span);
   });
+  if (fruits.length > 0) {
+    unlockAchievement('fruit_eater');
+  }
+};
+
+// Power Energizer Real-Time Gauge
+game.onEnergizerUpdate = (timeLeft, totalTime) => {
+  if (timeLeft > 0) {
+    energizerGauge.classList.remove('hidden');
+    const pct = Math.max(0, (timeLeft / totalTime) * 100);
+    energizerFill.style.width = `${pct}%`;
+    energizerTimerText.textContent = `${timeLeft.toFixed(1)}s`;
+    unlockAchievement('energizer');
+  } else {
+    energizerGauge.classList.add('hidden');
+  }
+};
+
+// Stage Dot Progress Tracker
+game.onProgressUpdate = (dotsEaten, totalDots) => {
+  const pct = Math.min(100, Math.floor((dotsEaten / totalDots) * 100));
+  stageDotFill.style.width = `${pct}%`;
+  dotCountLabel.textContent = `${dotsEaten} / ${totalDots} DOTS (${pct}%)`;
 };
 
 game.onStateChange = (state) => {
   if (state === GAME_STATES.READY) {
     overlayScreen.classList.add('active');
-    overlayBadge.textContent = 'SYSTEM READY';
+    overlayBadge.textContent = 'ARCADE CREDITS: FREE PLAY';
     overlayTitle.textContent = 'READY!';
-    overlaySubtitle.textContent = 'PRESS START OR MOVE TO PLAY';
-    btnStart.textContent = 'START GAME';
+    overlaySubtitle.textContent = 'PRESS START OR ARROW KEYS TO COMMENCE';
+    btnStart.querySelector('.btn-text').textContent = 'START MISSION';
     btnStart.style.display = 'inline-block';
-    gameStatusText.textContent = 'ARCADE READY';
+    gameStatusText.textContent = 'ARCADE ENGINE 60 FPS • ZERO LAG';
     showToast('READY!');
   } else if (state === GAME_STATES.PLAYING) {
     overlayScreen.classList.remove('active');
-    gameStatusText.textContent = 'MISSION IN PROGRESS';
+    gameStatusText.textContent = 'MISSION IN PROGRESS • 60 FPS';
     hideToast();
   } else if (state === GAME_STATES.PAUSED) {
     overlayScreen.classList.add('active');
-    overlayBadge.textContent = 'PAUSED';
+    overlayBadge.textContent = 'SYSTEM PAUSED';
     overlayTitle.textContent = 'GAME PAUSED';
-    overlaySubtitle.textContent = 'PRESS SPACE TO RESUME';
-    btnStart.textContent = 'RESUME';
+    overlaySubtitle.textContent = 'PRESS SPACE TO RESUME ARCADE';
+    btnStart.querySelector('.btn-text').textContent = 'RESUME PLAY';
     btnStart.style.display = 'inline-block';
-    gameStatusText.textContent = 'SYSTEM PAUSED';
+    gameStatusText.textContent = 'MISSION PAUSED';
   } else if (state === GAME_STATES.GAME_OVER) {
     overlayScreen.classList.add('active');
-    overlayBadge.textContent = 'GAME OVER';
+    overlayBadge.textContent = 'SESSION TERMINATED';
     overlayTitle.textContent = 'GAME OVER';
     overlaySubtitle.textContent = `FINAL SCORE: ${padScore(game.score)}`;
-    btnStart.textContent = 'PLAY AGAIN';
+    btnStart.querySelector('.btn-text').textContent = 'PLAY AGAIN';
     btnStart.style.display = 'inline-block';
-    gameStatusText.textContent = 'ARCADE SESSION OVER';
+    gameStatusText.textContent = 'ARCADE OVER • READY FOR NEW COIN';
     showToast('GAME OVER');
   } else if (state === GAME_STATES.LEVEL_CLEAR) {
     showToast('STAGE CLEAR!');
-    gameStatusText.textContent = 'WARPING TO NEXT STAGE';
+    gameStatusText.textContent = 'WARPING TO NEXT ARENA';
   }
 };
 
@@ -196,7 +323,7 @@ game.onGameOver = (finalScore, finalLevel) => {
       modalInitials.classList.remove('hidden');
       playerInitialsInput.value = 'AAA';
       playerInitialsInput.focus();
-    }, 800);
+    }, 700);
   }
 };
 
@@ -210,12 +337,28 @@ function hideToast() {
 }
 
 // ---------------------------------------------------------
+// AUDIO-REACTIVE VU METER VISUALIZER
+// ---------------------------------------------------------
+setInterval(() => {
+  if (game.state === GAME_STATES.PLAYING && !sound.isMuted) {
+    const level = Math.random();
+    leftVuBars.forEach((bar, idx) => {
+      bar.style.opacity = idx / 7 < level ? '1' : '0.25';
+    });
+    rightVuBars.forEach((bar, idx) => {
+      bar.style.opacity = idx / 7 < level ? '1' : '0.25';
+    });
+  } else {
+    leftVuBars.forEach(b => b.style.opacity = '0.25');
+    rightVuBars.forEach(b => b.style.opacity = '0.25');
+  }
+}, 100);
+
+// ---------------------------------------------------------
 // CONTROLS & EVENT LISTENERS
 // ---------------------------------------------------------
 function handleDirectionInput(dir) {
-  if (game.state === GAME_STATES.READY) {
-    game.start();
-  } else if (game.state === GAME_STATES.PAUSED) {
+  if (game.state === GAME_STATES.READY || game.state === GAME_STATES.PAUSED) {
     game.start();
   }
   if (game.pacman) {
@@ -225,7 +368,6 @@ function handleDirectionInput(dir) {
 
 // Keyboard Controls
 window.addEventListener('keydown', (e) => {
-  // Prevent default scroll on game keys
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
     e.preventDefault();
   }
@@ -295,7 +437,7 @@ dpadButtons.forEach(btn => {
   btn.addEventListener('mousedown', trigger);
 });
 
-// Touch Swipe on Canvas
+// Canvas Touch Swipe Gestures
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -313,7 +455,7 @@ canvas.addEventListener('touchend', (e) => {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    if (Math.max(absX, absY) > 24) {
+    if (Math.max(absX, absY) > 20) {
       if (absX > absY) {
         handleDirectionInput(dx > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT);
       } else {
@@ -354,8 +496,27 @@ btnCrt.addEventListener('click', () => {
   btnCrt.classList.toggle('active');
 });
 
-// Theme Cycling (Neon -> Classic -> Sunset)
-const themes = ['theme-neon', 'theme-classic', 'theme-sunset'];
+// Speed Toggle Button
+btnSpeed.addEventListener('click', () => {
+  currentSpeedIndex = (currentSpeedIndex + 1) % speedModes.length;
+  const mode = speedModes[currentSpeedIndex];
+  speedLabel.textContent = mode.label;
+  game.setSpeed(mode.mult);
+  showToast(`SPEED: ${mode.label}`);
+  setTimeout(hideToast, 1000);
+});
+
+// Fullscreen Button
+btnFullscreen.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+
+// Theme Cycling (Cyber Neon -> Arcade 1980 -> Synthwave Sunset -> Matrix Green)
+const themes = ['theme-neon', 'theme-arcade', 'theme-sunset', 'theme-matrix'];
 let currentThemeIndex = 0;
 
 btnTheme.addEventListener('click', () => {
@@ -391,6 +552,11 @@ btnLeaderboard.addEventListener('click', () => {
   modalScores.classList.remove('hidden');
 });
 
+btnAchievements.addEventListener('click', () => {
+  renderAchievements();
+  modalAchievements.classList.remove('hidden');
+});
+
 btnHelp.addEventListener('click', () => {
   modalHelp.classList.remove('hidden');
 });
@@ -408,6 +574,7 @@ function closeAllModals() {
   modalScores.classList.add('hidden');
   modalHelp.classList.add('hidden');
   modalInitials.classList.add('hidden');
+  modalAchievements.classList.add('hidden');
 }
 
 btnClearScores.addEventListener('click', () => {
@@ -423,7 +590,7 @@ btnSaveInitials.addEventListener('click', () => {
   modalScores.classList.remove('hidden');
 });
 
-// Preload Sprite images in the background (if user wants sprite mode or falls back to glowing canvas)
+// Preload Sprite images in the background
 function preloadSprites() {
   const spriteList = [
     'pacmanUp.png', 'pacmanDown.png', 'pacmanLeft.png', 'pacmanRight.png',
@@ -437,11 +604,12 @@ function preloadSprites() {
 }
 
 // ---------------------------------------------------------
-// INITIAL BOOTSTRAP
+// BOOTSTRAP SYSTEM
 // ---------------------------------------------------------
 preloadSprites();
 renderLeaderboard();
+renderAchievements();
 game.init(currentMap, currentDifficulty);
 game.run();
 
-console.log('🕹️ PAC-MAN DELUXE ARCADE 2.0 INITIALIZED - READY FOR VERCEL');
+console.log('🕹️ PAC-MAN DELUXE ARCADE 2.0 - PROFESSIONAL CYBER EDITION ACTIVATED');

@@ -4,284 +4,462 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>PAC-MAN DELUXE ARCADE | Cyber Retro Edition</title>
-  <meta name="description" content="An upgraded, retro-futuristic Pac-Man arcade experience with smart ghost AI, dynamic synth audio, power-ups, CRT effects, and mobile support. Ready for Vercel." />
-  
+  <meta name="description" content="A state-of-the-art Pac-Man arcade experience with smart ghost AI, dynamic Web Audio synthesis, CRT shaders, and instant Vercel deployment." />
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/assets/pacmanRight.png" />
 
-  <!-- Fonts -->
+  <!-- Google Fonts: Retro 8-bit & Modern UI Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body class="theme-neon crt-active">
-  <!-- Background Glow & Animated Grid -->
+  <!-- Dynamic Atmospheric Background -->
   <div class="bg-stars"></div>
+  <div class="cyber-horizon"></div>
   <div class="cyber-grid"></div>
 
   <div id="app" class="arcade-wrapper">
-    <!-- Top Header Bar -->
-    <header class="arcade-header">
+    <!-- Top Master Marquee -->
+    <header class="arcade-marquee">
+      <!-- Left side decorative cabinet lights -->
+      <div class="marquee-accent left-accent">
+        <span class="led-dot red"></span>
+        <span class="led-dot yellow"></span>
+        <span class="led-dot green"></span>
+      </div>
+
       <div class="brand">
-        <span class="brand-badge">2.0 VERCEL READY</span>
+        <div class="brand-tagline">
+          <span class="status-chip live"><span class="chip-glow"></span>SYSTEM ONLINE</span>
+          <span class="edition-label">VERCEL READY • 60 FPS</span>
+        </div>
         <h1 class="brand-title">
-          <span class="pac-letter">P</span><span class="pac-letter">A</span><span class="pac-letter">C</span><span class="pac-letter">-</span><span class="pac-letter">M</span><span class="pac-letter">A</span><span class="pac-letter">N</span>
-          <span class="deluxe-badge">DELUXE</span>
+          <span class="letter p1">P</span><span class="letter a1">A</span><span class="letter c1">C</span><span class="letter dash">-</span><span class="letter m1">M</span><span class="letter a2">A</span><span class="letter n1">N</span>
+          <span class="deluxe-crest">
+            <span class="crest-shine"></span>
+            DELUXE
+          </span>
         </h1>
       </div>
 
-      <!-- Quick Control Actions -->
-      <div class="header-actions">
-        <button id="btn-theme" class="icon-btn" title="Toggle Visual Theme" aria-label="Toggle Theme">
-          <span class="btn-icon">🎨</span>
-          <span class="btn-text">Theme</span>
-        </button>
-        <button id="btn-crt" class="icon-btn active" title="Toggle CRT Scanlines" aria-label="Toggle CRT">
-          <span class="btn-icon">📺</span>
-          <span class="btn-text">CRT</span>
-        </button>
-        <button id="btn-sound" class="icon-btn" title="Toggle 8-Bit Audio" aria-label="Toggle Sound">
-          <span id="sound-icon" class="btn-icon">🔊</span>
-          <span class="btn-text">Audio</span>
-        </button>
-        <button id="btn-leaderboard" class="icon-btn" title="View High Scores" aria-label="Leaderboard">
-          <span class="btn-icon">🏆</span>
-          <span class="btn-text">Scores</span>
-        </button>
-        <button id="btn-help" class="icon-btn" title="How to Play & Ghost Intel" aria-label="Help">
-          <span class="btn-icon">❓</span>
-          <span class="btn-text">Intel</span>
-        </button>
+      <!-- Quick Action Toolbar -->
+      <div class="marquee-controls">
+        <div class="button-group">
+          <button id="btn-theme" class="arcade-tool-btn" title="Cycle Visual Themes" aria-label="Theme">
+            <span class="tool-icon">🎨</span>
+            <span class="tool-label">Theme</span>
+          </button>
+          <button id="btn-crt" class="arcade-tool-btn active" title="Toggle CRT Scanline Shader" aria-label="CRT Monitor">
+            <span class="tool-icon">📺</span>
+            <span class="tool-label">CRT</span>
+          </button>
+          <button id="btn-sound" class="arcade-tool-btn active" title="Toggle Procedural Audio" aria-label="Sound">
+            <span id="sound-icon" class="tool-icon">🔊</span>
+            <span class="tool-label">Audio</span>
+          </button>
+          <button id="btn-speed" class="arcade-tool-btn" title="Game Speed" aria-label="Game Speed">
+            <span class="tool-icon">⚡</span>
+            <span id="speed-label" class="tool-label">1.0x</span>
+          </button>
+          <button id="btn-fullscreen" class="arcade-tool-btn" title="Toggle Fullscreen" aria-label="Fullscreen">
+            <span class="tool-icon">⛶</span>
+            <span class="tool-label">Expand</span>
+          </button>
+        </div>
+
+        <div class="button-group secondary">
+          <button id="btn-leaderboard" class="arcade-tool-btn highlight" title="Hall of Fame Leaderboard" aria-label="Scores">
+            <span class="tool-icon">🏆</span>
+            <span class="tool-label">Scores</span>
+          </button>
+          <button id="btn-achievements" class="arcade-tool-btn" title="View Achievements" aria-label="Badges">
+            <span class="tool-icon">🎖️</span>
+            <span class="tool-label">Badges</span>
+          </button>
+          <button id="btn-help" class="arcade-tool-btn" title="Ghost Targeting Intel" aria-label="Ghost Intel">
+            <span class="tool-icon">❓</span>
+            <span class="tool-label">Intel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right side decorative cabinet lights -->
+      <div class="marquee-accent right-accent">
+        <span class="led-dot green"></span>
+        <span class="led-dot yellow"></span>
+        <span class="led-dot red"></span>
       </div>
     </header>
 
-    <!-- Main Cabinet Frame -->
-    <main class="arcade-cabinet">
-      <!-- HUD Bar -->
-      <section class="hud-bar" aria-label="Game Stats">
-        <div class="hud-item score-box">
-          <div class="hud-label">1UP SCORE</div>
-          <div id="current-score" class="hud-value neon-pink">00000</div>
+    <!-- Main Arcade Cabinet Layout with Side Speaker Grilles -->
+    <div class="cabinet-chassis">
+      <!-- Left Equalizer Wing -->
+      <aside class="chassis-wing left-wing" aria-hidden="true">
+        <div class="speaker-grille"></div>
+        <div class="vu-meter" id="vu-left">
+          <div class="vu-bar v1"></div>
+          <div class="vu-bar v2"></div>
+          <div class="vu-bar v3"></div>
+          <div class="vu-bar v4"></div>
+          <div class="vu-bar v5"></div>
+          <div class="vu-bar v6"></div>
+          <div class="vu-bar v7"></div>
         </div>
+        <div class="wing-decal">HIGH VOLTAGE</div>
+      </aside>
 
-        <div class="hud-item high-score-box">
-          <div class="hud-label">HIGH SCORE</div>
-          <div id="high-score" class="hud-value neon-yellow">10000</div>
-        </div>
-
-        <div class="hud-item level-box">
-          <div class="hud-label">STAGE</div>
-          <div id="stage-number" class="hud-value neon-cyan">01</div>
-        </div>
-
-        <div class="hud-item lives-box">
-          <div class="hud-label">LIVES</div>
-          <div id="lives-display" class="lives-icons">
-            <span class="life-icon"></span>
-            <span class="life-icon"></span>
-            <span class="life-icon"></span>
+      <!-- Center Machine Body -->
+      <main class="arcade-cabinet">
+        <!-- Telemetry Glass HUD -->
+        <section class="hud-telemetry" aria-label="Telemetry HUD">
+          <div class="hud-card score-card">
+            <div class="card-header">
+              <span class="card-icon">⚡</span>
+              <span class="card-title">1UP SCORE</span>
+            </div>
+            <div id="current-score" class="digital-readout neon-pink">00000</div>
           </div>
-        </div>
 
-        <div class="hud-item fruit-box">
-          <div class="hud-label">BONUS</div>
-          <div id="fruit-collected" class="fruit-icons">
-            <!-- Rendered dynamically -->
+          <div class="hud-card highscore-card">
+            <div class="card-header">
+              <span class="card-icon">👑</span>
+              <span class="card-title">HIGH SCORE</span>
+            </div>
+            <div id="high-score" class="digital-readout neon-yellow">10000</div>
           </div>
-        </div>
-      </section>
 
-      <!-- Game Stage Screen Container with Scanlines Overlay -->
-      <div class="screen-bezel">
-        <div id="screen-container" class="screen-viewport">
-          <canvas id="game-canvas"></canvas>
+          <div class="hud-card stage-card">
+            <div class="card-header">
+              <span class="card-icon">🌀</span>
+              <span class="card-title">STAGE</span>
+            </div>
+            <div id="stage-number" class="digital-readout neon-cyan">01</div>
+          </div>
 
-          <!-- CRT Effects Layer -->
-          <div class="crt-overlay"></div>
-          <div class="crt-scanline"></div>
-
-          <!-- In-Game State Overlays (Paused, Game Over, Level Clear, Start) -->
-          <div id="overlay-screen" class="game-overlay active">
-            <div class="overlay-content">
-              <div id="overlay-badge" class="arcade-badge">INSERT COIN</div>
-              <h2 id="overlay-title" class="overlay-heading">READY!</h2>
-              <p id="overlay-subtitle" class="overlay-subheading">PRESS START OR ARROW KEYS TO PLAY</p>
-              
-              <div class="difficulty-select-wrap">
-                <span class="mode-label">DIFFICULTY:</span>
-                <div class="difficulty-buttons">
-                  <button class="diff-btn" data-mode="casual">CASUAL</button>
-                  <button class="diff-btn active" data-mode="arcade">ARCADE</button>
-                  <button class="diff-btn" data-mode="nightmare">NIGHTMARE</button>
-                </div>
-              </div>
-
-              <div class="map-select-wrap">
-                <span class="mode-label">MAP:</span>
-                <div class="map-buttons">
-                  <button class="map-btn active" data-map="original">ORIGINAL (21x19)</button>
-                  <button class="map-btn" data-map="arcade">CLASSIC (28x36)</button>
-                  <button class="map-btn" data-map="cyber">CYBER MATRIX</button>
-                </div>
-              </div>
-
-              <button id="btn-start" class="arcade-action-btn glow-yellow">
-                <span class="btn-shine"></span>
-                <span>START GAME</span>
-              </button>
+          <div class="hud-card lives-card">
+            <div class="card-header">
+              <span class="card-icon">💛</span>
+              <span class="card-title">LIVES</span>
+            </div>
+            <div id="lives-display" class="lives-container">
+              <span class="life-silhouette"></span>
+              <span class="life-silhouette"></span>
+              <span class="life-silhouette"></span>
             </div>
           </div>
 
-          <!-- Toast / Announcer Bar (e.g. READY!, FRUIT BONUS, ENERGIZED!) -->
-          <div id="announcer-toast" class="announcer hidden">READY!</div>
-        </div>
-      </div>
-
-      <!-- Bottom Arcade Dashboard -->
-      <section class="cabinet-controls">
-        <div class="controls-status">
-          <span class="status-indicator"></span>
-          <span id="game-status-text">ARCADE SYSTEM ACTIVE</span>
-        </div>
-
-        <div class="controls-quick-buttons">
-          <button id="btn-pause" class="sub-btn" aria-label="Pause Game">
-            <span class="icon">⏸</span>
-            <span>PAUSE [SPACE]</span>
-          </button>
-          <button id="btn-restart" class="sub-btn danger" aria-label="Restart Game">
-            <span class="icon">🔄</span>
-            <span>RESTART</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Virtual Mobile / Touch Controller (Visible on Touch Screens) -->
-      <div id="touch-controls" class="touch-controls-panel">
-        <div class="dpad">
-          <button class="dpad-btn dpad-up" data-dir="U" aria-label="Move Up">▲</button>
-          <div class="dpad-middle">
-            <button class="dpad-btn dpad-left" data-dir="L" aria-label="Move Left">◀</button>
-            <div class="dpad-center"></div>
-            <button class="dpad-btn dpad-right" data-dir="R" aria-label="Move Right">▶</button>
+          <div class="hud-card bonus-card">
+            <div class="card-header">
+              <span class="card-icon">🍒</span>
+              <span class="card-title">BONUS FRUIT</span>
+            </div>
+            <div id="fruit-collected" class="fruit-rack">
+              <!-- Dynamically populated -->
+            </div>
           </div>
-          <button class="dpad-btn dpad-down" data-dir="D" aria-label="Move Down">▼</button>
-        </div>
-      </div>
-    </main>
+        </section>
 
-    <!-- Footer with Controls Info & Deployment Specs -->
+        <!-- Energizer / Power Pellet Real-Time Countdown Bar -->
+        <div id="energizer-gauge" class="energizer-gauge hidden">
+          <div class="gauge-label">
+            <span class="pulse-icon">⚡</span>
+            <span>POWER ENERGIZED: <strong id="energizer-timer-text">8.0s</strong></span>
+          </div>
+          <div class="gauge-track">
+            <div id="energizer-fill" class="gauge-fill"></div>
+          </div>
+        </div>
+
+        <!-- Stage Dot Progress Tracker -->
+        <div class="stage-progress-bar">
+          <div class="progress-info">
+            <span id="dot-progress-label">STAGE CLEAR PROGRESS</span>
+            <span id="dot-count-label">0 / 0 DOTS</span>
+          </div>
+          <div class="progress-track">
+            <div id="stage-dot-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Curved Screen Bezel & Canvas Viewport -->
+        <div class="crt-monitor-frame">
+          <!-- Ambient Monitor Glare Reflection -->
+          <div class="monitor-glare"></div>
+
+          <div id="screen-container" class="canvas-viewport">
+            <canvas id="game-canvas"></canvas>
+
+            <!-- CRT Scanlines & Curved Glass Vignette Layer -->
+            <div class="crt-overlay"></div>
+            <div class="crt-scanline"></div>
+
+            <!-- In-Game State Overlays (Paused, Game Over, Level Clear, Start) -->
+            <div id="overlay-screen" class="game-overlay active">
+              <div class="overlay-glass-card">
+                <div class="insert-coin-chip">
+                  <span class="coin-icon">🪙</span>
+                  <span id="overlay-badge">ARCADE CREDITS: FREE PLAY</span>
+                </div>
+
+                <h2 id="overlay-title" class="overlay-heading">READY!</h2>
+                <p id="overlay-subtitle" class="overlay-subheading">PRESS START OR ARROW KEYS TO COMMENCE</p>
+                
+                <!-- Difficulty Selection -->
+                <div class="selector-row">
+                  <span class="selector-heading">DIFFICULTY LEVEL:</span>
+                  <div class="selector-pills">
+                    <button class="selector-pill diff-btn" data-mode="casual">CASUAL</button>
+                    <button class="selector-pill diff-btn active" data-mode="arcade">ARCADE</button>
+                    <button class="selector-pill diff-btn" data-mode="nightmare">NIGHTMARE</button>
+                  </div>
+                </div>
+
+                <!-- Map Arena Selection -->
+                <div class="selector-row">
+                  <span class="selector-heading">MAZE ARENA:</span>
+                  <div class="selector-pills">
+                    <button class="selector-pill map-btn active" data-map="original">ORIGINAL (21x19)</button>
+                    <button class="selector-pill map-btn" data-map="arcade">CLASSIC (28x31)</button>
+                    <button class="selector-pill map-btn" data-map="cyber">CYBER MATRIX</button>
+                  </div>
+                </div>
+
+                <button id="btn-start" class="hero-start-btn">
+                  <span class="btn-flare"></span>
+                  <span class="btn-text">START MISSION</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Toast / Announcer Bar (e.g. READY!, FRUIT BONUS, ENERGIZED!) -->
+            <div id="announcer-toast" class="announcer hidden">READY!</div>
+          </div>
+        </div>
+
+        <!-- Bottom Arcade Deck -->
+        <section class="arcade-deck">
+          <div class="deck-status">
+            <span class="status-orb"></span>
+            <span id="game-status-text">ARCADE ENGINE 60 FPS • ZERO LAG</span>
+          </div>
+
+          <div class="deck-buttons">
+            <button id="btn-pause" class="deck-btn" aria-label="Pause Game">
+              <span class="deck-icon">⏸</span>
+              <span>PAUSE [SPACE]</span>
+            </button>
+            <button id="btn-restart" class="deck-btn danger" aria-label="Restart Game">
+              <span class="deck-icon">🔄</span>
+              <span>RESTART [R]</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Touch Controls Panel for Mobile & Tablet -->
+        <div id="touch-controls" class="touch-controls-panel">
+          <div class="glass-dpad">
+            <button class="dpad-key dpad-up" data-dir="U" aria-label="Move Up">▲</button>
+            <div class="dpad-row">
+              <button class="dpad-key dpad-left" data-dir="L" aria-label="Move Left">◀</button>
+              <div class="dpad-center-hub"></div>
+              <button class="dpad-key dpad-right" data-dir="R" aria-label="Move Right">▶</button>
+            </div>
+            <button class="dpad-key dpad-down" data-dir="D" aria-label="Move Down">▼</button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Equalizer Wing -->
+      <aside class="chassis-wing right-wing" aria-hidden="true">
+        <div class="speaker-grille"></div>
+        <div class="vu-meter" id="vu-right">
+          <div class="vu-bar v1"></div>
+          <div class="vu-bar v2"></div>
+          <div class="vu-bar v3"></div>
+          <div class="vu-bar v4"></div>
+          <div class="vu-bar v5"></div>
+          <div class="vu-bar v6"></div>
+          <div class="vu-bar v7"></div>
+        </div>
+        <div class="wing-decal">STEREO CHIP</div>
+      </aside>
+    </div>
+
+    <!-- Arcade Footer Bar -->
     <footer class="arcade-footer">
-      <div class="keyboard-hints">
-        <span class="key-pill">▲ ▼ ◀ ▶</span> or <span class="key-pill">W A S D</span> to Move
-        <span class="hint-sep">|</span>
-        <span class="key-pill">SPACE</span> to Pause
-        <span class="hint-sep">|</span>
-        <span class="key-pill">M</span> Sound
+      <div class="control-tags">
+        <div class="tag-item"><kbd class="kbd-key">▲</kbd><kbd class="kbd-key">▼</kbd><kbd class="kbd-key">◀</kbd><kbd class="kbd-key">▶</kbd> / <kbd class="kbd-key">W</kbd><kbd class="kbd-key">A</kbd><kbd class="kbd-key">S</kbd><kbd class="kbd-key">D</kbd> Move</div>
+        <div class="tag-item"><kbd class="kbd-key">SPACE</kbd> Pause</div>
+        <div class="tag-item"><kbd class="kbd-key">M</kbd> Mute Audio</div>
+        <div class="tag-item"><kbd class="kbd-key">R</kbd> Restart</div>
       </div>
-      <div class="vercel-badge">
-        <span>Engineered for Vercel • 60 FPS HTML5 Canvas • Web Audio Synth</span>
+      <div class="repo-meta">
+        <span>Engineered for Vercel • Connected to <a href="https://github.com/Srijanprasad/pacman" target="_blank" rel="noopener noreferrer">github.com/Srijanprasad/pacman</a></span>
       </div>
     </footer>
   </div>
 
   <!-- High Scores Modal -->
-  <div id="modal-scores" class="modal-backdrop hidden">
-    <div class="modal-dialog">
+  <div id="modal-scores" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog pro-glass">
       <div class="modal-header">
-        <h3 class="modal-title">🏆 HALL OF FAME</h3>
-        <button class="modal-close" data-close="modal-scores">✕</button>
+        <div class="modal-title-wrap">
+          <span class="modal-trophy">🏆</span>
+          <h3 class="modal-title">HALL OF FAME</h3>
+        </div>
+        <button class="modal-close" data-close="modal-scores" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <div class="leaderboard-table">
           <div class="table-head">
             <span>RANK</span>
             <span>PLAYER</span>
-            <span>LEVEL</span>
-            <span>SCORE</span>
+            <span>STAGE</span>
+            <span class="text-right">SCORE</span>
           </div>
           <div id="leaderboard-rows" class="table-rows">
             <!-- Dynamically populated -->
           </div>
         </div>
         <div class="modal-actions">
-          <button id="btn-clear-scores" class="sub-btn danger">RESET SCORES</button>
+          <button id="btn-clear-scores" class="arcade-sub-btn danger">RESET RECORDS</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- High Score Name Entry Modal -->
-  <div id="modal-initials" class="modal-backdrop hidden">
-    <div class="modal-dialog neon-glow-entry">
+  <div id="modal-initials" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog pro-glass entry-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">⭐ NEW HIGH SCORE! ⭐</h3>
+        <h3 class="modal-title">⭐ NEW HIGH SCORE RECORD! ⭐</h3>
       </div>
       <div class="modal-body text-center">
-        <p class="congrats-text">YOU SECURED A TOP SPOT!</p>
-        <div class="entry-score" id="entry-score-val">00000</div>
-        <p class="initials-prompt">ENTER YOUR INITIALS (3 CHARS):</p>
-        <input type="text" id="player-initials" maxlength="3" autofocus uppercase value="AAA" class="initials-input" />
-        <div class="modal-actions">
-          <button id="btn-save-initials" class="arcade-action-btn glow-yellow">SUBMIT SCORE</button>
+        <p class="congrats-text">YOU EARNED A PLACE AMONG ARCADE LEGENDS!</p>
+        <div class="entry-score-banner" id="entry-score-val">00000</div>
+        <p class="initials-prompt">ENTER YOUR 3-LETTER INITIALS:</p>
+        <input type="text" id="player-initials" maxlength="3" autofocus uppercase value="AAA" class="initials-input-box" />
+        <div class="modal-actions center">
+          <button id="btn-save-initials" class="hero-start-btn small">CONFIRM RECORD</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Intel & Guide Modal -->
-  <div id="modal-help" class="modal-backdrop hidden">
-    <div class="modal-dialog guide-modal">
+  <!-- Achievements Modal -->
+  <div id="modal-achievements" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog pro-glass">
       <div class="modal-header">
-        <h3 class="modal-title">👾 GHOST INTEL & RULES</h3>
-        <button class="modal-close" data-close="modal-help">✕</button>
+        <div class="modal-title-wrap">
+          <span class="modal-trophy">🎖️</span>
+          <h3 class="modal-title">PILOT BADGES & AWARDS</h3>
+        </div>
+        <button class="modal-close" data-close="modal-achievements" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="badge-grid" id="badge-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ghost Intel & Game Rules Modal -->
+  <div id="modal-help" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog pro-glass guide-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-trophy">👾</span>
+          <h3 class="modal-title">GHOST INTEL & COMBAT TACTICS</h3>
+        </div>
+        <button class="modal-close" data-close="modal-help" aria-label="Close">✕</button>
       </div>
       <div class="modal-body guide-content">
         <section class="intel-section">
           <h4>GHOST TARGETING ALGORITHMS</h4>
-          <div class="ghost-cards">
-            <div class="ghost-card red-border">
-              <div class="ghost-avatar red"></div>
-              <div class="ghost-info">
-                <strong>BLINKY (RED) - "SHADOW"</strong>
-                <p>The relentless chaser. Targets Pac-Man's exact coordinates. Accelerates when pellets run low ("Cruise Elroy").</p>
+          <div class="ghost-intel-cards">
+            <div class="ghost-intel-card red-card">
+              <div class="ghost-icon-box red"></div>
+              <div class="intel-text">
+                <strong>BLINKY (RED) — "SHADOW"</strong>
+                <p>Relentless interceptor. Targets Pac-Man's exact tile coordinates. Gradually accelerates when pellets drop below 20 (*Cruise Elroy* mode).</p>
               </div>
             </div>
-            <div class="ghost-card pink-border">
-              <div class="ghost-avatar pink"></div>
-              <div class="ghost-info">
-                <strong>PINKY (PINK) - "SPEEDY"</strong>
-                <p>The ambusher. Calculates 4 tiles ahead of Pac-Man's trajectory to cut off your escape route.</p>
+
+            <div class="ghost-intel-card pink-card">
+              <div class="ghost-icon-box pink"></div>
+              <div class="intel-text">
+                <strong>PINKY (PINK) — "SPEEDY"</strong>
+                <p>The ambush master. Predicts your trajectory by targeting 4 tiles ahead of your heading direction to cut off escape corridors.</p>
               </div>
             </div>
-            <div class="ghost-card cyan-border">
-              <div class="ghost-avatar cyan"></div>
-              <div class="ghost-info">
-                <strong>INKY (CYAN) - "BASHFUL"</strong>
-                <p>The flanker. Uses double-vector geometry between Blinky and Pac-Man to coordinate pincer maneuvers.</p>
+
+            <div class="ghost-intel-card cyan-card">
+              <div class="ghost-icon-box cyan"></div>
+              <div class="intel-text">
+                <strong>INKY (CYAN) — "BASHFUL"</strong>
+                <p>Double-vector pincer flanker. Uses Blinky's position and Pac-Man's vector doubled to trap you in an inescapable crossfire.</p>
               </div>
             </div>
-            <div class="ghost-card orange-border">
-              <div class="ghost-avatar orange"></div>
-              <div class="ghost-info">
-                <strong>CLYDE (ORANGE) - "POKEY"</strong>
-                <p>The erratic coward. Pursues Pac-Man when far, but panics and retreats to his bottom-left corner when within 8 tiles.</p>
+
+            <div class="ghost-intel-card orange-card">
+              <div class="ghost-icon-box orange"></div>
+              <div class="intel-text">
+                <strong>CLYDE (ORANGE) — "POKEY"</strong>
+                <p>The coward. Pursues Pac-Man when far (>8 tiles), but panics and retreats to his bottom-left home corner when within 8 tiles.</p>
               </div>
             </div>
           </div>
         </section>
 
         <section class="intel-section">
-          <h4>POWER-UPS & SCORING</h4>
-          <ul class="guide-bullets">
-            <li><strong>Pellet:</strong> 10 PTS each. Clear all to advance the stage!</li>
-            <li><strong>Power Energizer (Blinking):</strong> 50 PTS. Turns ghosts blue and vulnerable for a limited window.</li>
-            <li><strong>Ghost Eating Combo:</strong> 200 → 400 → 800 → 1600 PTS consecutively!</li>
-            <li><strong>Bonus Fruits:</strong> Cherry (100 PTS), Strawberry (300 PTS), Orange (500 PTS), Apple (700 PTS), Melon (1000 PTS), Key (5000 PTS).</li>
-            <li><strong>Warp Tunnels:</strong> Slip through the side portals to instantly cross the board and outwit chasing ghosts.</li>
-          </ul>
+          <h4>SCORING MATRIX & COMBOS</h4>
+          <div class="scoring-pill-grid">
+            <div class="score-pill">
+              <span class="sp-name">Food Dot</span>
+              <span class="sp-pts neon-yellow">10 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">Power Energizer</span>
+              <span class="sp-pts neon-cyan">50 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">1st Ghost Eaten</span>
+              <span class="sp-pts neon-pink">200 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">2nd Ghost Combo</span>
+              <span class="sp-pts neon-pink">400 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">3rd Ghost Combo</span>
+              <span class="sp-pts neon-pink">800 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">4th Ghost Combo</span>
+              <span class="sp-pts neon-pink">1600 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">🍒 Cherry</span>
+              <span class="sp-pts">100 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">🍓 Strawberry</span>
+              <span class="sp-pts">300 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">🍊 Orange</span>
+              <span class="sp-pts">500 PTS</span>
+            </div>
+            <div class="score-pill">
+              <span class="sp-name">🗝️ Boss Key</span>
+              <span class="sp-pts neon-cyan">5000 PTS</span>
+            </div>
+          </div>
         </section>
       </div>
     </div>
