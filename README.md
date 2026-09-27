@@ -189,7 +189,6 @@ npx vercel --prod
 
 ## 👨‍💻 Author & Credits
 
-- **Creator & Developer:** **Srijan Prasad**
+
 - **GitHub:** [@Srijanprasad](https://github.com/Srijanprasad)
-- **Repository:** [https://github.com/Srijanprasad/pacman](https://github.com/Srijanprasad/pacman)
-- **Copyright:** © 2026 Srijan Prasad. All Rights Reserved.
+
