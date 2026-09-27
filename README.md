@@ -187,8 +187,5 @@ npx vercel --prod
 
 ---
 
-## 👨‍💻 Author & Credits
-
-
 - **GitHub:** [@Srijanprasad](https://github.com/Srijanprasad)
 
