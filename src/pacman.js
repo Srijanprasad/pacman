@@ -29,16 +29,10 @@ export class Pacman {
     this.mouthOpening = true;
 
     this.isDying = false;
-    this.deathProgress = 0; // 0 to 1
+    this.deathProgress = 0;
     this.isDead = false;
 
-    // Sprite image references
-    this.sprites = {
-      U: null,
-      D: null,
-      L: null,
-      R: null
-    };
+    this.sprites = { U: null, D: null, L: null, R: null };
   }
 
   setSprites(sprites) {
@@ -66,60 +60,24 @@ export class Pacman {
     this.nextDirection = dir;
   }
 
-  canMove(dir, walls, boardWidth, boardHeight) {
-    if (dir === DIRECTIONS.NONE) return false;
-
-    let testX = this.x;
-    let testY = this.y;
-    const offset = this.speed + 1;
-
-    if (dir === DIRECTIONS.UP) testY -= offset;
-    else if (dir === DIRECTIONS.DOWN) testY += offset;
-    else if (dir === DIRECTIONS.LEFT) testX -= offset;
-    else if (dir === DIRECTIONS.RIGHT) testX += offset;
-
-    const r = this.radius * 0.9;
-    const box = {
-      x: testX - r,
-      y: testY - r,
-      width: r * 2,
-      height: r * 2
-    };
-
-    for (let i = 0; i < walls.length; i++) {
-      const w = walls[i];
-      if (
-        box.x < w.x + w.width &&
-        box.x + box.width > w.x &&
-        box.y < w.y + w.height &&
-        box.y + box.height > w.y
-      ) {
-        return false;
-      }
-    }
-    return true;
+  isOpposite(d1, d2) {
+    return (
+      (d1 === DIRECTIONS.UP && d2 === DIRECTIONS.DOWN) ||
+      (d1 === DIRECTIONS.DOWN && d2 === DIRECTIONS.UP) ||
+      (d1 === DIRECTIONS.LEFT && d2 === DIRECTIONS.RIGHT) ||
+      (d1 === DIRECTIONS.RIGHT && d2 === DIRECTIONS.LEFT)
+    );
   }
 
-  // Snap to tile center along the perpendicular axis to make turns effortless
-  alignToGrid(dir) {
-    if (dir === DIRECTIONS.UP || dir === DIRECTIONS.DOWN) {
-      // align x
-      const col = Math.floor(this.x / this.tileSize);
-      const targetX = col * this.tileSize + this.tileSize / 2;
-      if (Math.abs(this.x - targetX) < this.tileSize * 0.45) {
-        this.x = targetX;
-      }
-    } else if (dir === DIRECTIONS.LEFT || dir === DIRECTIONS.RIGHT) {
-      // align y
-      const row = Math.floor(this.y / this.tileSize);
-      const targetY = row * this.tileSize + this.tileSize / 2;
-      if (Math.abs(this.y - targetY) < this.tileSize * 0.45) {
-        this.y = targetY;
-      }
-    }
+  getAdjacentTile(r, c, dir) {
+    if (dir === DIRECTIONS.UP) return { row: r - 1, col: c };
+    if (dir === DIRECTIONS.DOWN) return { row: r + 1, col: c };
+    if (dir === DIRECTIONS.LEFT) return { row: r, col: c - 1 };
+    if (dir === DIRECTIONS.RIGHT) return { row: r, col: c + 1 };
+    return { row: r, col: c };
   }
 
-  update(dt, walls, boardWidth, boardHeight) {
+  update(dt, mazeGrid, boardWidth, boardHeight) {
     if (this.isDying) {
       this.deathProgress += 0.025 * dt * 60;
       if (this.deathProgress >= 1.0) {
@@ -128,39 +86,101 @@ export class Pacman {
       return;
     }
 
-    // Try applying buffered turn if valid
-    if (this.nextDirection !== this.direction) {
-      this.alignToGrid(this.nextDirection);
-      if (this.canMove(this.nextDirection, walls, boardWidth, boardHeight)) {
-        this.direction = this.nextDirection;
+    const tileSize = this.tileSize;
+    const speed = this.speed * dt * 60;
+
+    // Identify current tile and tile center
+    let col = Math.floor(this.x / tileSize);
+    let row = Math.floor(this.y / tileSize);
+
+    // Keep col/row inside grid bounds for center calculations
+    col = Math.max(0, Math.min(mazeGrid.colCount - 1, col));
+    row = Math.max(0, Math.min(mazeGrid.rowCount - 1, row));
+
+    const center = mazeGrid.getTileCenter(row, col);
+
+    // 1. Immediate 180-degree reverse (can reverse at any point in any corridor)
+    if (this.isOpposite(this.nextDirection, this.direction)) {
+      this.direction = this.nextDirection;
+    }
+
+    // 2. Cornering & buffered turns:
+    if (this.nextDirection !== this.direction && this.nextDirection !== DIRECTIONS.NONE) {
+      const nextTile = this.getAdjacentTile(row, col, this.nextDirection);
+      if (mazeGrid.isWalkable(nextTile.row, nextTile.col, false, false)) {
+        const turnThreshold = Math.max(speed * 1.5, 7);
+
+        if (this.nextDirection === DIRECTIONS.UP || this.nextDirection === DIRECTIONS.DOWN) {
+          if (Math.abs(this.x - center.x) <= turnThreshold) {
+            this.x = center.x;
+            this.direction = this.nextDirection;
+          }
+        } else if (this.nextDirection === DIRECTIONS.LEFT || this.nextDirection === DIRECTIONS.RIGHT) {
+          if (Math.abs(this.y - center.y) <= turnThreshold) {
+            this.y = center.y;
+            this.direction = this.nextDirection;
+          }
+        }
       }
     }
 
-    // Check if can continue current direction
-    if (this.canMove(this.direction, walls, boardWidth, boardHeight)) {
-      const moveDist = this.speed * dt * 60;
-      if (this.direction === DIRECTIONS.UP) this.y -= moveDist;
-      else if (this.direction === DIRECTIONS.DOWN) this.y += moveDist;
-      else if (this.direction === DIRECTIONS.LEFT) this.x -= moveDist;
-      else if (this.direction === DIRECTIONS.RIGHT) this.x += moveDist;
+    // 3. Movement in current direction
+    if (this.direction !== DIRECTIONS.NONE) {
+      const aheadTile = this.getAdjacentTile(row, col, this.direction);
+      const isAheadWall = !mazeGrid.isWalkable(aheadTile.row, aheadTile.col, false, false);
 
-      // Animate mouth
-      if (this.mouthOpening) {
-        this.mouthAngle += this.mouthSpeed * dt * 60;
-        if (this.mouthAngle >= 0.45) this.mouthOpening = false;
+      let canAdvance = true;
+
+      // If heading into a wall, cannot move beyond the tile center!
+      if (isAheadWall) {
+        if (this.direction === DIRECTIONS.RIGHT && this.x + speed >= center.x) {
+          this.x = center.x;
+          canAdvance = false;
+        } else if (this.direction === DIRECTIONS.LEFT && this.x - speed <= center.x) {
+          this.x = center.x;
+          canAdvance = false;
+        } else if (this.direction === DIRECTIONS.DOWN && this.y + speed >= center.y) {
+          this.y = center.y;
+          canAdvance = false;
+        } else if (this.direction === DIRECTIONS.UP && this.y - speed <= center.y) {
+          this.y = center.y;
+          canAdvance = false;
+        }
+      }
+
+      if (canAdvance) {
+        if (this.direction === DIRECTIONS.RIGHT) {
+          this.x += speed;
+          this.y = center.y; // Keep locked to center lane
+        } else if (this.direction === DIRECTIONS.LEFT) {
+          this.x -= speed;
+          this.y = center.y;
+        } else if (this.direction === DIRECTIONS.DOWN) {
+          this.y += speed;
+          this.x = center.x;
+        } else if (this.direction === DIRECTIONS.UP) {
+          this.y -= speed;
+          this.x = center.x;
+        }
+
+        // Animate mouth
+        if (this.mouthOpening) {
+          this.mouthAngle += this.mouthSpeed * dt * 60;
+          if (this.mouthAngle >= 0.45) this.mouthOpening = false;
+        } else {
+          this.mouthAngle -= this.mouthSpeed * dt * 60;
+          if (this.mouthAngle <= 0.05) this.mouthOpening = true;
+        }
       } else {
-        this.mouthAngle -= this.mouthSpeed * dt * 60;
-        if (this.mouthAngle <= 0.05) this.mouthOpening = true;
+        this.mouthAngle = 0.2;
       }
-    } else {
-      this.mouthAngle = 0.2;
     }
 
-    // Wrap around screen tunnels seamlessly
-    if (this.x < -this.tileSize / 2) {
-      this.x = boardWidth + this.tileSize / 2 - 2;
-    } else if (this.x > boardWidth + this.tileSize / 2) {
-      this.x = -this.tileSize / 2 + 2;
+    // 4. Wrap around tunnels
+    if (this.x < -tileSize / 2) {
+      this.x = boardWidth + tileSize / 2 - 2;
+    } else if (this.x > boardWidth + tileSize / 2) {
+      this.x = -tileSize / 2 + 2;
     }
   }
 
@@ -174,7 +194,6 @@ export class Pacman {
     ctx.translate(this.x, this.y);
 
     if (this.isDying) {
-      // Classic Pacman dissolution animation
       const angle = this.deathProgress * Math.PI;
       ctx.fillStyle = '#ffe600';
       ctx.shadowColor = '#ffe600';
@@ -187,37 +206,29 @@ export class Pacman {
       return;
     }
 
-    // Render using sprites or high-res vector canvas
-    const currentSprite = this.sprites[this.direction] || this.sprites.R;
-    if (useSprites && currentSprite && currentSprite.complete) {
-      const s = this.tileSize * 1.1;
-      ctx.drawImage(currentSprite, -s / 2, -s / 2, s, s);
-    } else {
-      // High-tech Glowing Vector Canvas Pac-Man
-      let rot = 0;
-      if (this.direction === DIRECTIONS.UP) rot = -Math.PI / 2;
-      else if (this.direction === DIRECTIONS.DOWN) rot = Math.PI / 2;
-      else if (this.direction === DIRECTIONS.LEFT) rot = Math.PI;
-      else if (this.direction === DIRECTIONS.RIGHT) rot = 0;
+    let rot = 0;
+    if (this.direction === DIRECTIONS.UP) rot = -Math.PI / 2;
+    else if (this.direction === DIRECTIONS.DOWN) rot = Math.PI / 2;
+    else if (this.direction === DIRECTIONS.LEFT) rot = Math.PI;
+    else if (this.direction === DIRECTIONS.RIGHT) rot = 0;
 
-      ctx.rotate(rot);
+    ctx.rotate(rot);
 
-      ctx.fillStyle = '#ffe600';
-      ctx.shadowColor = 'rgba(255, 230, 0, 0.7)';
-      ctx.shadowBlur = 12;
+    ctx.fillStyle = '#ffe600';
+    ctx.shadowColor = 'rgba(255, 230, 0, 0.7)';
+    ctx.shadowBlur = 12;
 
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, this.mouthAngle * Math.PI, (2 - this.mouthAngle) * Math.PI);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, this.mouthAngle * Math.PI, (2 - this.mouthAngle) * Math.PI);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
 
-      // Subtle eye sparkle
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.arc(this.radius * 0.2, -this.radius * 0.45, this.radius * 0.14, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Eye sparkle
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(this.radius * 0.2, -this.radius * 0.45, this.radius * 0.14, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }

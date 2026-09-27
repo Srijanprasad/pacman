@@ -144,11 +144,11 @@ export class GameEngine {
       clyde: { x: 0, y: this.boardHeight }
     };
 
-    // Initialize Ghosts
-    const gRed = new Ghost('blinky', '#ff3344', this.tileSize, corners.blinky);
-    const gPink = new Ghost('pinky', '#ff88dd', this.tileSize, corners.pinky);
-    const gCyan = new Ghost('inky', '#00ddff', this.tileSize, corners.inky);
-    const gOrange = new Ghost('clyde', '#ffaa33', this.tileSize, corners.clyde);
+    // Initialize Ghosts with staggered exit sequencing
+    const gRed = new Ghost('blinky', '#ff3344', this.tileSize, corners.blinky, 0); // Exits immediately!
+    const gPink = new Ghost('pinky', '#ff88dd', this.tileSize, corners.pinky, 1.2); // Exits after 1.2s!
+    const gCyan = new Ghost('inky', '#00ddff', this.tileSize, corners.inky, 3.5); // Exits after 3.5s!
+    const gOrange = new Ghost('clyde', '#ffaa33', this.tileSize, corners.clyde, 6.0); // Exits after 6.0s!
 
     const start = this.mapData.ghostsStart;
     if (start.red) gRed.setStartPosition(start.red.x, start.red.y);
@@ -228,7 +228,7 @@ export class GameEngine {
     }
 
     if (this.state === GAME_STATES.DYING) {
-      this.pacman.update(dt, this.mapData.walls, this.boardWidth, this.boardHeight);
+      this.pacman.update(dt, this.mapData.mazeGrid, this.boardWidth, this.boardHeight);
       this.particles.update(dt);
       if (this.pacman.isDead) {
         this.handlePacmanDeathComplete();
@@ -275,11 +275,11 @@ export class GameEngine {
     }
 
     // 2. Update Pacman
-    this.pacman.update(dt, this.mapData.walls, this.boardWidth, this.boardHeight);
+    this.pacman.update(dt, this.mapData.mazeGrid, this.boardWidth, this.boardHeight);
 
     // 3. Update Ghosts
     this.ghosts.forEach(g => {
-      g.update(dt, this.mapData.walls, this.boardWidth, this.boardHeight, this.pacman, this.blinky);
+      g.update(dt, this.mapData.mazeGrid, this.boardWidth, this.boardHeight, this.pacman, this.blinky, this.mapData.doorTileCoord);
     });
 
     // 4. Check Food & Power Pellets Collision
@@ -308,7 +308,7 @@ export class GameEngine {
     // Normal Dots
     for (let i = this.mapData.dots.length - 1; i >= 0; i--) {
       const dot = this.mapData.dots[i];
-      if (Math.hypot(px - dot.x, py - dot.y) < eatRadius + dot.radius) {
+      if (Math.hypot(px - dot.x, py - dot.y) < eatRadius + dot.radius + 4) {
         this.mapData.dots.splice(i, 1);
         this.score += 10;
         this.dotsEatenThisLevel++;
@@ -324,7 +324,7 @@ export class GameEngine {
     // Power Pellets
     for (let i = this.mapData.powerPellets.length - 1; i >= 0; i--) {
       const p = this.mapData.powerPellets[i];
-      if (Math.hypot(px - p.x, py - p.y) < eatRadius + p.radius) {
+      if (Math.hypot(px - p.x, py - p.y) < eatRadius + p.radius + 4) {
         this.mapData.powerPellets.splice(i, 1);
         this.score += 50;
         this.dotsEatenThisLevel++;
@@ -351,7 +351,7 @@ export class GameEngine {
     if (this.dotsEatenThisLevel === 60 || this.dotsEatenThisLevel === 150) {
       const fruitIndex = Math.min(this.level - 1, FRUITS.length - 1);
       this.activeFruit = FRUITS[fruitIndex];
-      this.fruitTimer = 11.0; // Active for 11 seconds
+      this.fruitTimer = 11.0;
     }
   }
 
@@ -386,6 +386,7 @@ export class GameEngine {
 
     for (let i = 0; i < this.ghosts.length; i++) {
       const g = this.ghosts[i];
+      if (g.inPen) continue; // Ghosts inside the pen cannot harm Pac-Man
       const dist = Math.hypot(px - g.x, py - g.y);
 
       if (dist < threshold) {
@@ -400,7 +401,7 @@ export class GameEngine {
           this.particles.addGhostExplosion(g.x, g.y, g.color, 25);
           this.particles.addScorePopup(g.x, g.y, `+${pts}`, '#00ffff');
 
-          // Dramatic freeze frame effect
+          // Freeze frame effect
           this.state = GAME_STATES.GHOST_PAUSE;
           this.ghostPauseTimer = 0.4;
 
