@@ -1,15 +1,83 @@
-#
+# 🕹️ PAC-MAN DELUXE ARCADE (Java Edition)
 
- [Pacman](https://youtu.be/lB_J-VNMVpE)
-- Coding Tutorial: [https://youtu.be/lB_J-VNMVpE](https://youtu.be/lB_J-VNMVpE)
+<div align="center">
 
-In this tutorial, you will learn to create the pacman game with the built-in java awt/swing graphics library.
+![Java](https://img.shields.io/badge/Java-21%20%7C%2026-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-0078D6?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Complete-00C853?style=for-the-badge)
+![Graphics](https://img.shields.io/badge/Graphics-Java%202D%20Swing%20%2860%20FPS%29-FF3D00?style=for-the-badge)
+![Audio](https://img.shields.io/badge/Audio-Procedural%20Java%20Sound-7C4DFF?style=for-the-badge)
 
-Throughout the tutorial, you will learn how to create the game loop, create a jframe and jpanel, draw images on the jpanel, load the game map using a tilemap, add click handlers to make the pacman move, create a simple algorithm to move each ghost at random, detect collisions between the pacman and ghosts, have pacman eat the food pellets, add a running score, and reset the game when pacman collides with a ghost. 
+</div>
 
-[How to setup Java with Visual Studio Code](https://youtu.be/BB0gZFpukJU)
+---
 
-![pacman-ss](https://github.com/user-attachments/assets/9f16553b-9092-4894-b740-b8903ed24fa9)
+## 📸 In-Game Screenshots
 
-## Homework:
-You can continue working on this project if you like. You can design your own map by modifying the tileMap if you want. You can add power pellets to allow pacman to eat the ghosts. In addition, there is an opening on left and right, where if pacman goes through, it would appear on the other side of the map. Currently pacman just moves off screen out of the map so a fix would be needed to make pacman appear the other side. For more of a challenge, you can modify the ghosts movement to cover areas unreachable since the ghosts only change directions when they collide against a wall, and not when theres another path available to go through.
+### System Ready Screen
+<div align="center">
+  <img src="../docs/screenshots/java_edition_ready.png" alt="Java Edition System Ready" width="600" />
+</div>
+
+<br/>
+
+### Active Mission Gameplay
+<div align="center">
+  <img src="../docs/screenshots/java_edition_gameplay.png" alt="Java Edition Active Gameplay" width="600" />
+</div>
+
+---
+
+## ⚡ Features & Upgrades
+
+1. **Pre-Turn Corner Buffering**:
+   - Zero wall sticking! Pac-Man executes turns smoothly at intersections.
+2. **Power Energizers & Scared Ghosts**:
+   - 4 pulsating energizers in the corners turn ghosts vulnerable blue.
+   - Flashing white/blue warning in the final seconds of frightened mode.
+3. **Escalating Ghost Multiplier**:
+   - Eat scared ghosts for `200 → 400 → 800 → 1600` points with floating popups.
+   - Eaten ghosts return home to the ghost house as eyes to respawn.
+4. **Warp Tunnels**:
+   - Seamless teleportation across the left and right tunnel gates.
+5. **Bonus Fruit (Cherry)**:
+   - Spawns at 30 and 80 dots for +100 bonus points.
+6. **Procedural Java Audio Engine (`SoundEngine.java`)**:
+   - Pure 8-bit sound generated via `javax.sound.sampled` (zero external audio files needed).
+7. **Developer Branding**:
+   - Window title bar, bottom HUD, and dialogs certified by **Srijan Prasad**.
+
+---
+
+## 🚀 How to Run
+
+### Option 1: Standalone Runnable JAR
+```bash
+java -jar PacManDeluxe.jar
+```
+
+### Option 2: Compile & Run from Source
+```bash
+# Compile
+javac App.java PacMan.java SoundEngine.java
+
+# Run
+java App
+```
+
+---
+
+## 🎮 Controls
+
+- **`▲` `▼` `◀` `▶`** or **`W` `A` `S` `D`**: Steer Pac-Man
+- **`Space`**: Pause / Resume Mission
+- **`M`**: Toggle Sound Mute
+- **`R`**: Restart Mission
+
+---
+
+## 👨‍💻 Credits
+
+- **Designed & Developed by:** **Srijan Prasad**
+- **Repository:** [https://github.com/Srijanprasad/pacman](https://github.com/Srijanprasad/pacman)
+- **Copyright:** © 2026 Srijan Prasad. All Rights Reserved.

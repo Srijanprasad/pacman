@@ -10,20 +10,6 @@
 ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
 <br/>
-
-### **Engineered & Developed by [Srijan Prasad](https://github.com/Srijanprasad)**
-**Official GitHub Repository:** [https://github.com/Srijanprasad/pacman](https://github.com/Srijanprasad/pacman)
-
-```
-==========================================================================
-  PAC-MAN DELUXE ARCADE • WATERMARK CERTIFICATE
-  Developer : Srijan Prasad
-  GitHub    : https://github.com/Srijanprasad/pacman
-  Edition   : Java Desktop Arcade Edition 2.0 (Swing / Java2D)
-  Watermark : © Srijan Prasad | PAC-MAN DELUXE ARCADE — All Rights Reserved
-==========================================================================
-```
-
 </div>
 
 ---
@@ -38,8 +24,7 @@ Unlike basic tutorial clones where ghosts move purely at random and Pac-Man gets
 - **Authentic Ghost AI Personalities**: Blinky (Chaser), Pinky (Ambusher), Inky (Flanker), and Clyde (Coward).
 - **Procedural 8-Bit Java Sound Engine**: 100% pure procedural tone synthesis using standard `javax.sound.sampled` — zero external MP3/WAV dependencies!
 - **Warp Tunnels**: Smooth wrap-around teleportation between left and right gates.
-- **Bonus Cherry Fruit**: Spawns in the maze at pellet milestones for +100 bonus points.
-- **On-Screen Developer Watermark**: Prominently features creator credits for **Srijan Prasad**.
+- **Developer Credits**: Prominently features credits for **Srijan Prasad**.
 
 ---
 
@@ -178,9 +163,9 @@ Each ghost operates with its own distinct targeting mathematics:
   - *Death Sound:* Chromatic falling-pitch bend.
 - Uses a background daemon thread pool (`ExecutorService`) so audio synthesis never interrupts the 60 FPS graphics loop.
 
-### 3. Dynamic Watermark & Developer Branding
-- Includes window title bar watermark: `PAC-MAN DELUXE ARCADE • Developed by Srijan Prasad`.
-- Real-time on-screen HUD watermark: `⚡ PAC-MAN DELUXE | DEV: SRIJAN PRASAD`.
+### 3. Developer Branding
+- Window title bar: `PAC-MAN DELUXE ARCADE • Developed by Srijan Prasad`.
+- Real-time on-screen HUD branding: `⚡ PAC-MAN DELUXE | DEV: SRIJAN PRASAD`.
 - Overlay dialogs certified with `ENGINEERED BY SRIJAN PRASAD`.
 
 ---
@@ -202,7 +187,7 @@ npx vercel --prod
 
 ---
 
-## 👨‍💻 Author & Watermark
+## 👨‍💻 Author & Credits
 
 - **Creator & Developer:** **Srijan Prasad**
 - **GitHub:** [@Srijanprasad](https://github.com/Srijanprasad)
