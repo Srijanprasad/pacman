@@ -41,6 +41,8 @@ export class Ghost {
     this.skirtFrame = 0;
     this.skirtTimer = 0;
 
+    this.lastTileKey = '';
+
     this.sprite = null;
     this.scaredSprite = null;
   }
@@ -66,6 +68,7 @@ export class Ghost {
     this.exitTimer = this.exitDelay;
     this.inPen = this.exitDelay > 0;
     this.penBobTimer = Math.random() * Math.PI;
+    this.lastTileKey = '';
   }
 
   setFrightened(duration) {
@@ -222,10 +225,12 @@ export class Ghost {
     row = Math.max(0, Math.min(mazeGrid.rowCount - 1, row));
 
     const center = mazeGrid.getTileCenter(row, col);
+    const tileKey = `${row},${col}`;
 
-    // Check if close enough to tile center to choose next direction
+    // Check if close enough to tile center to choose next direction (only once per tile)
     const distToCenter = Math.hypot(this.x - center.x, this.y - center.y);
-    if (distToCenter <= Math.max(speed * 1.2, 5)) {
+    if (distToCenter <= Math.max(speed * 1.2, 5) && this.lastTileKey !== tileKey) {
+      this.lastTileKey = tileKey;
       this.chooseNextDirection(mazeGrid, row, col, pacman, blinky, doorCoord);
     }
 
@@ -249,6 +254,7 @@ export class Ghost {
         canAdvance = false;
       }
       if (!canAdvance) {
+        this.lastTileKey = '';
         this.chooseNextDirection(mazeGrid, row, col, pacman, blinky, doorCoord);
       }
     }

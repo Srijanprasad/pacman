@@ -362,6 +362,7 @@ btnTheme.addEventListener('click', () => {
   document.body.classList.remove(themes[currentThemeIndex]);
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
   document.body.classList.add(themes[currentThemeIndex]);
+  game.cacheMazeWalls();
 });
 
 // Difficulty Selection

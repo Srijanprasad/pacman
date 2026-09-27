@@ -116,6 +116,7 @@ export class GameEngine {
     this.ghostCombo = 0;
 
     this.mapData = parseMap(this.mapConfig);
+    this.cacheMazeWalls();
 
     // Initialize Pacman
     this.pacman = new Pacman(this.tileSize);
@@ -218,15 +219,6 @@ export class GameEngine {
   update(dt) {
     this.powerPelletPulse = (this.powerPelletPulse + dt * 5) % (Math.PI * 2);
 
-    if (this.state === GAME_STATES.GHOST_PAUSE) {
-      this.ghostPauseTimer -= dt;
-      if (this.ghostPauseTimer <= 0) {
-        this.state = GAME_STATES.PLAYING;
-      }
-      this.particles.update(dt);
-      return;
-    }
-
     if (this.state === GAME_STATES.DYING) {
       this.pacman.update(dt, this.mapData.mazeGrid, this.boardWidth, this.boardHeight);
       this.particles.update(dt);
@@ -303,45 +295,49 @@ export class GameEngine {
   checkFoodCollision() {
     const px = this.pacman.x;
     const py = this.pacman.y;
-    const eatRadius = this.pacman.radius;
+    const pCol = Math.floor(px / this.tileSize);
+    const pRow = Math.floor(py / this.tileSize);
 
-    // Normal Dots
+    // Normal Dots - check dots within adjacent tiles only
     for (let i = this.mapData.dots.length - 1; i >= 0; i--) {
       const dot = this.mapData.dots[i];
-      if (Math.hypot(px - dot.x, py - dot.y) < eatRadius + dot.radius + 4) {
-        this.mapData.dots.splice(i, 1);
-        this.score += 10;
-        this.dotsEatenThisLevel++;
-        this.checkFruitSpawnTrigger();
-        sound.playWaka();
-        this.particles.addPelletSparkles(dot.x, dot.y, '#ffe600', 3);
-        this.checkHighScore();
-        this.notifyUI();
-        break;
+      if (Math.abs(dot.col - pCol) <= 1 && Math.abs(dot.row - pRow) <= 1) {
+        if (Math.hypot(px - dot.x, py - dot.y) < this.pacman.radius + dot.radius + 4) {
+          this.mapData.dots.splice(i, 1);
+          this.score += 10;
+          this.dotsEatenThisLevel++;
+          this.checkFruitSpawnTrigger();
+          sound.playWaka();
+          this.particles.addPelletSparkles(dot.x, dot.y, '#ffe600', 2);
+          this.checkHighScore();
+          this.notifyUI();
+          break;
+        }
       }
     }
 
-    // Power Pellets
+    // Power Pellets - check pellets within adjacent tiles only
     for (let i = this.mapData.powerPellets.length - 1; i >= 0; i--) {
       const p = this.mapData.powerPellets[i];
-      if (Math.hypot(px - p.x, py - p.y) < eatRadius + p.radius + 4) {
-        this.mapData.powerPellets.splice(i, 1);
-        this.score += 50;
-        this.dotsEatenThisLevel++;
-        this.ghostCombo = 0;
-        sound.playPowerPellet();
-        this.particles.addGhostExplosion(p.x, p.y, '#00ffff', 15);
-        this.particles.addScorePopup(p.x, p.y, '+50', '#00ffff');
+      if (Math.abs(p.col - pCol) <= 1 && Math.abs(p.row - pRow) <= 1) {
+        if (Math.hypot(px - p.x, py - p.y) < this.pacman.radius + p.radius + 4) {
+          this.mapData.powerPellets.splice(i, 1);
+          this.score += 50;
+          this.dotsEatenThisLevel++;
+          this.ghostCombo = 0;
+          sound.playPowerPellet();
+          this.particles.addGhostExplosion(p.x, p.y, '#00ffff', 12);
+          this.particles.addScorePopup(p.x, p.y, '+50', '#00ffff');
 
-        // Scared duration scales with level & difficulty
-        let scaredSecs = Math.max(3.5, 9.0 - (this.level - 1) * 0.8);
-        if (this.difficulty === 'casual') scaredSecs += 2.5;
-        if (this.difficulty === 'nightmare') scaredSecs *= 0.65;
+          let scaredSecs = Math.max(3.5, 9.0 - (this.level - 1) * 0.8);
+          if (this.difficulty === 'casual') scaredSecs += 2.5;
+          if (this.difficulty === 'nightmare') scaredSecs *= 0.65;
 
-        this.ghosts.forEach(g => g.setFrightened(scaredSecs));
-        this.checkHighScore();
-        this.notifyUI();
-        break;
+          this.ghosts.forEach(g => g.setFrightened(scaredSecs));
+          this.checkHighScore();
+          this.notifyUI();
+          break;
+        }
       }
     }
   }
@@ -391,7 +387,7 @@ export class GameEngine {
 
       if (dist < threshold) {
         if (g.mode === GHOST_MODES.FRIGHTENED) {
-          // Eat Ghost!
+          // Eat Ghost without freezing the game!
           g.mode = GHOST_MODES.EATEN;
           this.ghostCombo++;
           const pts = Math.min(1600, 200 * Math.pow(2, this.ghostCombo - 1));
@@ -400,10 +396,6 @@ export class GameEngine {
           sound.playEatGhost();
           this.particles.addGhostExplosion(g.x, g.y, g.color, 25);
           this.particles.addScorePopup(g.x, g.y, `+${pts}`, '#00ffff');
-
-          // Freeze frame effect
-          this.state = GAME_STATES.GHOST_PAUSE;
-          this.ghostPauseTimer = 0.4;
 
           this.checkHighScore();
           this.notifyUI();
@@ -497,65 +489,73 @@ export class GameEngine {
     this.particles.draw(ctx);
   }
 
-  drawMazeWalls(ctx) {
+  cacheMazeWalls() {
     if (!this.mapData) return;
+    if (!this.wallCanvas) {
+      this.wallCanvas = document.createElement('canvas');
+    }
+    this.wallCanvas.width = this.boardWidth;
+    this.wallCanvas.height = this.boardHeight;
+    const wCtx = this.wallCanvas.getContext('2d');
 
-    ctx.save();
-    const isFlashing = this.state === GAME_STATES.LEVEL_CLEAR && this.mazeFlash;
+    // Background
+    wCtx.fillStyle = '#02040b';
+    wCtx.fillRect(0, 0, this.boardWidth, this.boardHeight);
 
-    // Glowing Neon Cyber Walls
-    ctx.fillStyle = '#02040b';
-    ctx.fillRect(0, 0, this.boardWidth, this.boardHeight);
+    const wallColor = this.mapId === 'cyber' ? '#ff007b' : '#0077ff';
+    const glowColor = this.mapId === 'cyber' ? 'rgba(255, 0, 123, 0.4)' : 'rgba(0, 119, 255, 0.35)';
 
-    const wallColor = isFlashing ? '#ffffff' : (this.mapId === 'cyber' ? '#ff007b' : '#0077ff');
-    const glowColor = isFlashing ? 'rgba(255, 255, 255, 0.9)' : (this.mapId === 'cyber' ? 'rgba(255, 0, 123, 0.5)' : 'rgba(0, 119, 255, 0.45)');
-
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = isFlashing ? 16 : 8;
-
-    ctx.fillStyle = '#060a1e';
-    ctx.strokeStyle = wallColor;
-    ctx.lineWidth = 2.5;
+    wCtx.shadowColor = glowColor;
+    wCtx.shadowBlur = 6;
+    wCtx.fillStyle = '#060a1e';
+    wCtx.strokeStyle = wallColor;
+    wCtx.lineWidth = 2.5;
 
     for (let i = 0; i < this.mapData.walls.length; i++) {
       const w = this.mapData.walls[i];
-      ctx.fillRect(w.x + 1, w.y + 1, w.width - 2, w.height - 2);
-      ctx.strokeRect(w.x + 2, w.y + 2, w.width - 4, w.height - 4);
+      wCtx.fillRect(w.x + 1, w.y + 1, w.width - 2, w.height - 2);
+      wCtx.strokeRect(w.x + 2, w.y + 2, w.width - 4, w.height - 4);
     }
 
     // Ghost House Gate Door
     if (this.mapData.ghostDoor) {
       const d = this.mapData.ghostDoor;
-      ctx.fillStyle = '#ff88aa';
-      ctx.shadowColor = '#ff88aa';
-      ctx.shadowBlur = 10;
-      ctx.fillRect(d.x, d.y + d.height, d.width, 3);
+      wCtx.fillStyle = '#ff88aa';
+      wCtx.shadowColor = '#ff88aa';
+      wCtx.shadowBlur = 8;
+      wCtx.fillRect(d.x, d.y + d.height, d.width, 3);
     }
+  }
 
-    ctx.restore();
+  drawMazeWalls(ctx) {
+    if (this.wallCanvas) {
+      ctx.drawImage(this.wallCanvas, 0, 0);
+    }
+    // Level clear flashing effect
+    if (this.state === GAME_STATES.LEVEL_CLEAR && this.mazeFlash) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillRect(0, 0, this.boardWidth, this.boardHeight);
+    }
   }
 
   drawDots(ctx) {
     ctx.save();
 
-    // Normal Dots
+    // Normal Dots - single batch path for 60-120 FPS performance
     ctx.fillStyle = '#ffdd99';
-    ctx.shadowColor = 'rgba(255, 221, 153, 0.6)';
-    ctx.shadowBlur = 4;
-
+    ctx.beginPath();
     for (let i = 0; i < this.mapData.dots.length; i++) {
       const dot = this.mapData.dots[i];
-      ctx.beginPath();
+      ctx.moveTo(dot.x + dot.radius, dot.y);
       ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
-      ctx.fill();
     }
+    ctx.fill();
 
     // Power Energizers (Pulsating)
     const pulseFactor = 0.85 + Math.sin(this.powerPelletPulse) * 0.25;
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0, 243, 255, 0.9)';
-    ctx.shadowBlur = 14;
-
+    ctx.shadowColor = '#00f3ff';
+    ctx.shadowBlur = 8;
     for (let i = 0; i < this.mapData.powerPellets.length; i++) {
       const p = this.mapData.powerPellets[i];
       ctx.beginPath();
